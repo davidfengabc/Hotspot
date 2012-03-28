@@ -9,6 +9,9 @@ import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
 import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -29,6 +32,7 @@ public class HotspotFrame extends JFrame implements ActionListener{
 	private Vector<String> interfaces = new Vector<String>(1,1);
 	private JComboBox comboBoxIface;
 	private JButton btnActivate, btnDeactivate;
+	private String[] command = {"ps", "-e"};
 
 	/**
 	 * Launch the application.
@@ -81,6 +85,15 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		btnDeactivate.setActionCommand("deactivate");
 		btnDeactivate.setEnabled(false);
 		contentPane.add(btnDeactivate);
+
+		if (getHotspotState()) {
+			btnDeactivate.setEnabled(true);
+			btnActivate.setEnabled(false);
+		} else {
+			btnDeactivate.setEnabled(false);
+			btnActivate.setEnabled(true);
+		}
+
 		
 		btnActivate.addActionListener(this);
 		btnDeactivate.addActionListener(this);
@@ -99,6 +112,30 @@ public class HotspotFrame extends JFrame implements ActionListener{
             btnDeactivate.setEnabled(true);
         }
     }
+	
+	/*
+	 * Check to see if hostapd or dnsmasq are running
+	 */
+	private boolean getHotspotState() {
+		boolean hotspotState = false;
+		try {			
+			ProcessBuilder pb = new ProcessBuilder(command);
+			Process proc = pb.start();
+			BufferedReader br = new BufferedReader(new InputStreamReader (proc.getInputStream()));
+			String line;
+			while ((line = br.readLine()) != null) {
+				if((line.indexOf("hostapd") != -1) || line.indexOf("dnsmasq") != -1) {
+					hotspotState = true;
+					break;
+				}
+	        }
+			br.close();
+		} catch (IOException e) {
+			System.out.println("error");
+		}
+		
+		return hotspotState;
+	}
 	
 	//private Vector<String> getInterfaces() {
 	private void getInterfaces() {
