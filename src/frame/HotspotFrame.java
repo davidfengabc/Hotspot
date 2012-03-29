@@ -137,9 +137,12 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		return hotspotState;
 	}
 	
-	//private Vector<String> getInterfaces() {
+
+	/*
+	 * Populate interfaces with all active network interfaces except wlan0 and lo
+	 */
 	private void getInterfaces() {
-		//Vector<String> interfaces = new Vector<String>(1,1);
+
 		try {
 			Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
 			for(NetworkInterface iface : Collections.list(ifaces)) {
@@ -157,7 +160,6 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		} catch (SocketException e) {
 			System.out.println("error");
 		}
-		//return interfaces;
 		
 	}
 }
