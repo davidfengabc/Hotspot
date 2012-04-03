@@ -8,6 +8,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,8 +17,10 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,7 +36,11 @@ public class HotspotFrame extends JFrame implements ActionListener{
 	private Vector<String> interfaces = new Vector<String>(1,1);
 	private JComboBox comboBoxIface;
 	private JButton btnActivate, btnDeactivate;
-	private String[] command = {"ps", "-e"};
+	private String[] psCommand = {"ps", "-e"};
+	private String[] apctlStart = {"ap_ctl", "--start"};
+	private String[] apctlStop = {"ap_ctl", "--stop"};
+	List<NetworkInterface> ifaces;
+
 
 	/**
 	 * Launch the application.
@@ -54,8 +62,12 @@ public class HotspotFrame extends JFrame implements ActionListener{
 	 * Create the frame.
 	 */
 	public HotspotFrame() {
+		String username = System.getProperty("user.name");
+		if (!username.equals("root")) {
+			String error = "Error: Current user is not root";
+			JOptionPane.showMessageDialog(this, error);
+		}
 		setBounds(new Rectangle(0, 0, 200, 200));
-		//Vector<String> interfaces = new Vector<String>(1,1);
 		getInterfaces();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -105,33 +117,77 @@ public class HotspotFrame extends JFrame implements ActionListener{
 	
 	public void actionPerformed(ActionEvent e) {
         if ("deactivate".equals(e.getActionCommand())) {
+        	deactivateHotspot();
+        	if(getHotspotState() == true) {
+        		System.out.println("error deactivating hotspot");
+        		JOptionPane.showMessageDialog(this, "Error deactivating hotspot");
+        	}
             btnActivate.setEnabled(true);
             btnDeactivate.setEnabled(false);
         } else {
+        	if(getHotspotState() == true) {
+        		System.out.println("error hotspot active");
+        		JOptionPane.showMessageDialog(this, "Error hotspot already active");
+        	} else {
+        		String iface;
+        		iface = (ifaces.get(comboBoxIface.getSelectedIndex())).getDisplayName();
+        		activateHotspot(iface);
+        	}
             btnActivate.setEnabled(false);
             btnDeactivate.setEnabled(true);
         }
     }
 	
 	/*
+	 * Deactivate hotspot
+	 */
+	private void deactivateHotspot() {
+		ProcessBuilder pb = new ProcessBuilder(apctlStop);
+		try {
+			Process proc = pb.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * Activate hotspot
+	 */
+	private void activateHotspot(String iface) {
+		List<String> startCmd = new ArrayList<String>();
+		for (String i : apctlStart) {
+			startCmd.add(i);
+		}
+		startCmd.add(iface);
+		try {
+			ProcessBuilder pb  = new ProcessBuilder(startCmd);
+			Process proc = pb.start();
+		} catch ( IOException e ) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*
 	 * Check to see if hostapd or dnsmasq are running
+	 * return true if hotspot is active
 	 */
 	private boolean getHotspotState() {
 		boolean hotspotState = false;
 		try {			
-			ProcessBuilder pb = new ProcessBuilder(command);
+			ProcessBuilder pb = new ProcessBuilder(psCommand);
 			Process proc = pb.start();
 			BufferedReader br = new BufferedReader(new InputStreamReader (proc.getInputStream()));
 			String line;
 			while ((line = br.readLine()) != null) {
 				if((line.indexOf("hostapd") != -1) || line.indexOf("dnsmasq") != -1) {
 					hotspotState = true;
+					System.out.println("hotspot active");
 					break;
 				}
 	        }
 			br.close();
 		} catch (IOException e) {
-			System.out.println("error");
+			e.printStackTrace();
 		}
 		
 		return hotspotState;
@@ -144,8 +200,9 @@ public class HotspotFrame extends JFrame implements ActionListener{
 	private void getInterfaces() {
 
 		try {
-			Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
-			for(NetworkInterface iface : Collections.list(ifaces)) {
+			Enumeration<NetworkInterface> ifacesEnum = NetworkInterface.getNetworkInterfaces();
+			ifaces = Collections.list(ifacesEnum);
+			for(NetworkInterface iface : ifaces) {
 				String ifaceName = iface.getDisplayName();
 				if ((ifaceName.equals("lo")) || (ifaceName.equals("wlan0")))
 					continue;
@@ -158,7 +215,7 @@ public class HotspotFrame extends JFrame implements ActionListener{
 			}
 
 		} catch (SocketException e) {
-			System.out.println("error");
+			e.printStackTrace();
 		}
 		
 	}
