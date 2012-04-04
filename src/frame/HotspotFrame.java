@@ -145,7 +145,9 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		ProcessBuilder pb = new ProcessBuilder(apctlStop);
 		try {
 			Process proc = pb.start();
-		} catch (IOException e) {
+			if(proc.waitFor() != 0)
+				System.out.println("Error activating hotspot");
+		} catch ( Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -162,7 +164,9 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		try {
 			ProcessBuilder pb  = new ProcessBuilder(startCmd);
 			Process proc = pb.start();
-		} catch ( IOException e ) {
+			if(proc.waitFor() != 0)
+				System.out.println("Error activating hotspot");
+		} catch ( Exception e ) {
 			e.printStackTrace();
 		}
 	}
@@ -186,7 +190,9 @@ public class HotspotFrame extends JFrame implements ActionListener{
 				}
 	        }
 			br.close();
-		} catch (IOException e) {
+			if(proc.waitFor() != 0)
+				System.out.println("Error activating hotspot");
+		} catch ( Exception e) {
 			e.printStackTrace();
 		}
 		
