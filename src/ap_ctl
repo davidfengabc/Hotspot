@@ -91,6 +91,8 @@ elif [[ $1 == "-1" || $1 == "--stop" ]]
 
  # restart networking
  /etc/init.d/networking restart
+ 
+ sleep 2
 elif [[ $1 == "-2" || $1 == "--ics" ]]
  then
  # create iptables rules
