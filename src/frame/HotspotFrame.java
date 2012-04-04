@@ -208,10 +208,14 @@ public class HotspotFrame extends JFrame implements ActionListener{
 		try {
 			Enumeration<NetworkInterface> ifacesEnum = NetworkInterface.getNetworkInterfaces();
 			ifaces = Collections.list(ifacesEnum);
-			for(NetworkInterface iface : ifaces) {
+			for(int i=0; i<ifaces.size(); i++) {
+				NetworkInterface iface = ifaces.get(i);
 				String ifaceName = iface.getDisplayName();
-				if ((ifaceName.equals("lo")) || (ifaceName.equals("wlan0")))
+				if ((ifaceName.equals("lo")) || (ifaceName.equals("wlan0"))) {
+					ifaces.remove(iface);
+					i--;
 					continue;
+				}
 				String textAddrs = " ";
 				Enumeration<InetAddress> addrs= iface.getInetAddresses();
 				for(InetAddress addr : Collections.list(addrs)) {
